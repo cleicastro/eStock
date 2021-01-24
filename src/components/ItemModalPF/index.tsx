@@ -12,6 +12,7 @@ import {
   ModalBody,
   CloseButton,
   ItemInfo,
+  ItemInfoCol,
   ItemInfoDescrible,
   ItemDescrible,
   RowItem,
@@ -23,7 +24,13 @@ import {
 import { Alert } from 'react-native'
 import { AppContext } from '../../context/AppContext'
 
-interface Apoitment {
+export interface Produto {
+  id: number
+  descricao: string
+  quantidade: number
+}
+
+type Apoitment = {
   id: number
   item: {
     id: number
@@ -32,12 +39,8 @@ interface Apoitment {
     unidade: string
   }
   lote: number
-  date: string
-  volume: number
-  prateleira: string
-  corredor: string
-  quantidade: number
-  vencimento: Date
+  produtos: Array<Produto>
+  vencimento: string
   obs: string
   created_at: Date
 }
@@ -48,13 +51,13 @@ type Props = {
   apontamento: Apoitment
 }
 
-const ItemModal: React.FC<Props> = ({ show, setShow, apontamento }) => {
+const ItemModalPF: React.FC<Props> = ({ show, setShow, apontamento }) => {
   const {
-    state: { apointments },
+    state: { apointmentsPF },
     dispatch
   }: any = useContext(AppContext)
 
-  const handleCloseModal = () => {
+  const handleCloseModal = (): void => {
     setShow(false)
   }
 
@@ -62,16 +65,18 @@ const ItemModal: React.FC<Props> = ({ show, setShow, apontamento }) => {
     Alert.alert('Inventário', 'Realmente deseja remover este apontamneto?', [
       {
         text: 'Não',
-        onPress: () => false
+        onPress: (): boolean => false
       },
       {
         text: 'Sim',
-        onPress: async () => {
+        onPress: async (): Promise<void> => {
           const realm = await getRealm()
           realm.write(() => {
-            realm.delete(realm.objectForPrimaryKey('Apointment', id))
+            realm.delete(
+              realm.objectForPrimaryKey('ApointmentProductFinished', id)
+            )
           })
-          const data = apointments.filter(
+          const data = apointmentsPF.filter(
             (apointment: Apoitment) => apointment.id !== id
           )
           dispatch({
@@ -89,7 +94,9 @@ const ItemModal: React.FC<Props> = ({ show, setShow, apontamento }) => {
     <Modal transparent={true} visible={show} animationType="fade">
       <ModalArea>
         <ModalBody>
-          <CloseButton onPress={() => handleDeleteApointment(apontamento.id)}>
+          <CloseButton
+            onPress={(): void => handleDeleteApointment(apontamento.id)}
+          >
             <Icon name="delete" size={26} color="#f00" />
           </CloseButton>
           <ItemInfo style={{ flexDirection: 'column' }}>
@@ -108,37 +115,34 @@ const ItemModal: React.FC<Props> = ({ show, setShow, apontamento }) => {
               </Span>
             </ItemInfoDescrible>
           </ItemInfo>
+          <ItemInfoCol>
+            {apontamento.produtos.map((apontamento: Produto, key: number) => (
+              <RowItem key={key}>
+                <Span style={{ marginRight: 28 }}>{apontamento.descricao}</Span>
+                <Span>{apontamento.quantidade.toFixed(2)}</Span>
+              </RowItem>
+            ))}
+          </ItemInfoCol>
           <ItemInfo>
             <RowItem>
-              <ColItem>
+              <ColItem style={{ marginRight: 28 }}>
                 <Span>Vencimento: </Span>
                 <Span>
-                  {moment(new Date(apontamento.vencimento)).format(
-                    'DD/MM/YYYY'
-                  )}
+                  {moment(apontamento.vencimento).format('DD/MM/YYYY')}
                 </Span>
-              </ColItem>
-              <ColItem>
-                <Span>Volume: </Span>
-                <Span>{apontamento.volume.toFixed(2)}</Span>
-              </ColItem>
-              <ColItem>
-                <Span>Quantidade: </Span>
-                <Span>{apontamento.quantidade.toFixed(2)}</Span>
               </ColItem>
               <ColItem>
                 <Span>Total: </Span>
                 <Span>
-                  {(apontamento.quantidade * apontamento.volume).toFixed(2)}
+                  {apontamento.produtos.reduce(
+                    (acc, produto) => produto.quantidade + acc,
+                    0
+                  )}
                 </Span>
               </ColItem>
             </RowItem>
           </ItemInfo>
           <ItemInfo style={{ flexDirection: 'column' }}>
-            <ItemInfoDescrible>
-              <Span>Corredor: {apontamento.corredor}</Span>
-              <Span>Prateleira: {apontamento.prateleira}</Span>
-            </ItemInfoDescrible>
             <Span>Obs:</Span>
             <ItemDescrible>{apontamento.obs}</ItemDescrible>
           </ItemInfo>
@@ -151,4 +155,4 @@ const ItemModal: React.FC<Props> = ({ show, setShow, apontamento }) => {
   )
 }
 
-export default ItemModal
+export default ItemModalPF

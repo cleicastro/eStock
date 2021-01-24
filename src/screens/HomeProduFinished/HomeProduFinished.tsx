@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native'
 import React, { useContext, useEffect, useState } from 'react'
 import { RefreshControl, Animated } from 'react-native'
 import Icon from 'react-native-vector-icons/MaterialIcons'
-import ApointmentItem from '../../components/ApointmentItem'
+import ApointmentProductItem from '../../components/ApointmentProductItem'
 import { AppContext } from '../../context/AppContext'
 import { ACTIONS } from '../../context/inventoryReduce'
 import getRealm from '../../services/realm'
@@ -19,7 +19,13 @@ import {
   ListArea
 } from './styles'
 
-interface Apointment {
+export interface Produto {
+  id: number
+  descricao: string
+  quantidade: number
+}
+
+interface ApointmentProductFinished {
   id: number
   item: {
     id: number
@@ -28,32 +34,28 @@ interface Apointment {
     unidade: string
   }
   lote: number
-  date: string
-  volume: number
-  prateleira: string
-  corredor: string
-  quantidade: number
-  vencimento: Date
+  produtos: Array<Produto>
+  vencimento: string
   obs: string
   created_at: Date
 }
 
-const Home: React.FC = () => {
+const HomeProduFinished: React.FC = () => {
   const navigation = useNavigation()
   const [scrollY] = useState(new Animated.Value(0))
   const [refreshing, setRefreshing] = useState(false)
   const [searchText, setSearchText] = useState<string>('')
   const {
-    state: { apointments },
+    state: { apointmentsPF },
     dispatch
-  } = useContext(AppContext)
+  }: any = useContext(AppContext)
 
   useEffect(() => {
-    async function loadApointments() {
+    async function loadApointments(): Promise<void> {
       const realm = await getRealm()
-      const data = realm.objects('Apointment').sorted('id', true)
+      const data = realm.objects('ApointmentProductFinished').sorted('id', true)
       dispatch({
-        type: ACTIONS.LIST_APOINTMENT,
+        type: ACTIONS.LIST_APOINTMENT_PF,
         payload: data
       })
     }
@@ -64,17 +66,19 @@ const Home: React.FC = () => {
     const realm = await getRealm()
     if (searchText !== '') {
       const data = realm
-        .objects('Apointment')
+        .objects('ApointmentProductFinished')
         .filtered(`item.descricao LIKE "*${searchText}*"`)
         .sorted('id', false)
       dispatch({
-        type: ACTIONS.LIST_APOINTMENT,
+        type: ACTIONS.LIST_APOINTMENT_PF,
         payload: data
       })
     } else {
-      const data = realm.objects('Apointment').sorted('id', false)
+      const data = realm
+        .objects('ApointmentProductFinished')
+        .sorted('id', false)
       dispatch({
-        type: ACTIONS.LIST_APOINTMENT,
+        type: ACTIONS.LIST_APOINTMENT_PF,
         payload: data
       })
     }
@@ -83,9 +87,9 @@ const Home: React.FC = () => {
   const handleRefresh = async (): Promise<void> => {
     setRefreshing(true)
     const realm = await getRealm()
-    const data = realm.objects('Apointment').sorted('id', true)
+    const data = realm.objects('ApointmentProductFinished').sorted('id', true)
     dispatch({
-      type: ACTIONS.LIST_APOINTMENT,
+      type: ACTIONS.LIST_APOINTMENT_PF,
       payload: data
     })
     setRefreshing(false)
@@ -117,7 +121,7 @@ const Home: React.FC = () => {
             onPress={handleBackOption}
           />
           <HeaderTitle numberOfLines={2}>
-            {apointments.length} Apontamentos para sincronizar
+            {apointmentsPF.length} Apontamentos para sincronizar
           </HeaderTitle>
         </HeaderAreaTitle>
         <ApointmentsArea>
@@ -125,7 +129,7 @@ const Home: React.FC = () => {
             placeholder="Descrição do item"
             placeholderTextColor="#fff"
             value={searchText}
-            onChangeText={text => setSearchText(text)}
+            onChangeText={(text): void => setSearchText(text)}
           />
           <ApontimentFinder onPress={handleSearchApointment}>
             <Icon name="search" size={26} color="#FFF" />
@@ -149,8 +153,8 @@ const Home: React.FC = () => {
         }
       >
         <ListArea>
-          {apointments.map((item: Apointment) => (
-            <ApointmentItem key={item.id} data={item} />
+          {apointmentsPF.map((item: ApointmentProductFinished) => (
+            <ApointmentProductItem key={item.id} data={item} />
           ))}
         </ListArea>
       </Scroller>
@@ -158,4 +162,4 @@ const Home: React.FC = () => {
   )
 }
 
-export default Home
+export default HomeProduFinished

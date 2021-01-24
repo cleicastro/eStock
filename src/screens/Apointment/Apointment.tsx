@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/camelcase */
+/* eslint-disable no-unused-expressions */
 import React, { useEffect, useState, useRef, useContext } from 'react'
 import { Alert, TextInput } from 'react-native'
 import Icon from 'react-native-vector-icons/MaterialIcons'
@@ -18,7 +21,9 @@ import {
   Input,
   ButtonArea,
   ActionButton,
-  ActionButtonText
+  ActionButtonText,
+  LabelItemDescription,
+  LabelItemCod
 } from './styles'
 
 interface Item {
@@ -37,7 +42,7 @@ interface Token {
 }
 
 const Apointment: React.FC = () => {
-  const { dispatch } = useContext(AppContext)
+  const { dispatch }: any = useContext(AppContext)
 
   const loteRef = useRef<TextInput>(null)
   const volumeRef = useRef<TextInput>(null)
@@ -70,7 +75,7 @@ const Apointment: React.FC = () => {
   }, [volume, quantidade])
 
   useEffect(() => {
-    const matriculaStorage = async () => {
+    const matriculaStorage = async (): Promise<void> => {
       const user: any = await AsyncStorage.getItem('token')
       const tokenParse: Token = JSON.parse(user)
       setMatricula(tokenParse.matricula)
@@ -78,11 +83,11 @@ const Apointment: React.FC = () => {
     matriculaStorage()
   }, [])
 
-  const handleShowItem = () => {
+  const handleShowItem = (): void => {
     setShowModal(true)
   }
 
-  const clearNewNote = (isClear: boolean) => {
+  const clearNewNote = (isClear: boolean): void => {
     setVolume('')
     setQuantidade('')
     setTotal('')
@@ -104,28 +109,27 @@ const Apointment: React.FC = () => {
     }
   }
 
-  const handleSelectItem = (item: Item) => {
+  const handleSelectItem = (item: Item): void => {
     setItemSelected(item)
     setShowModal(false)
   }
 
-  const onChangeVencimento = (event: Event, selectedDate?: Date) => {
+  const onChangeVencimento = (event: Event, selectedDate?: Date): void => {
     const currentDate = selectedDate || dateVencimento
     setShowDateVencimento(false)
     setDateVencimento(currentDate)
     setVencimento(moment(currentDate).format('DD/MM/YYYY'))
   }
 
-  const handleSaveApointment = async () => {
+  const handleSaveApointment = async (): Promise<void> => {
     try {
       const realm = await getRealm()
-      const lastApointment: number | null = realm.objects('Apointment').length
-
-      const highestId: number | null =
-        lastApointment === null ? 0 : lastApointment
-
+      const incrementID: number =
+        realm.objects('Apointment').max('id') > 0
+          ? Number(realm.objects('Apointment').max('id'))
+          : 1
       const data = {
-        id: highestId === null ? 1 : highestId + 1,
+        id: incrementID || 1,
         item: itemSelected,
         matricula,
         lote,
@@ -153,13 +157,13 @@ const Apointment: React.FC = () => {
         [
           {
             text: 'Sim',
-            onPress: () => {
+            onPress: (): void => {
               clearNewNote(false)
             }
           },
           {
             text: 'Não',
-            onPress: () => {
+            onPress: (): void => {
               clearNewNote(true)
             },
             style: 'cancel'
@@ -173,13 +177,15 @@ const Apointment: React.FC = () => {
 
   return (
     <Container>
+      <LabelItemCod>{itemSelected.codigo}</LabelItemCod>
       <InputArea>
-        <Input
+        {/* <Input
           value={itemSelected.descricao}
           placeholder="Item"
           editable={false}
           style={{ backgroundColor: '#dfdfdf' }}
-        />
+        /> */}
+        <LabelItemDescription>{itemSelected.descricao}</LabelItemDescription>
         <ItemFinder onPress={handleShowItem}>
           <Icon name="search" size={26} color="#63c2d1" />
         </ItemFinder>
@@ -205,7 +211,7 @@ const Apointment: React.FC = () => {
           value={vencimento}
           onChangeText={setVencimento}
         />
-        <ItemFinder onPress={() => setShowDateVencimento(true)}>
+        <ItemFinder onPress={(): void => setShowDateVencimento(true)}>
           <Icon name="calendar-today" size={26} color="#63c2d1" />
         </ItemFinder>
         {showDateVencimento && (

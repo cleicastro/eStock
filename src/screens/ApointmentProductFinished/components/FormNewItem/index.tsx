@@ -53,7 +53,7 @@ const FormNewItem: React.FC<Props> = ({ saveItem }) => {
       </InputArea>
       <ButtonArea>
         <ActionButton
-          onPress={(): void =>
+          onPress={() =>
             saveItem({
               id,
               codigo: codigo !== '' ? Number(codigo) : 0,

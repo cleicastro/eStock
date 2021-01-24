@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import React, { useContext, useState } from 'react'
 import Icon from 'react-native-vector-icons/MaterialIcons'
 import { ActivityIndicator, Alert } from 'react-native'
@@ -9,12 +10,27 @@ import apiApointments from '../../services/apointments'
 import { TabArea, TabItem, TabItemCenter } from './styles'
 import { AppContext } from '../../context/AppContext'
 import { ACTIONS } from '../../context/inventoryReduce'
+import moment from 'moment'
 
 interface Item {
   id: number
   codigo: number
   descricao: string
   unidade: string
+}
+
+export interface Produto {
+  descricao: string
+  quantidade: number
+}
+
+export interface ApointmentPF {
+  item: Item
+  matricula: string
+  lote: number
+  produtos: Array<Produto>
+  vencimento: string
+  created_at: Date
 }
 
 interface Apointments {
@@ -52,15 +68,15 @@ type Props = {
 }
 
 const CustonTabBar: React.FC<Props> = ({ state, navigation }) => {
-  const { dispatch } = useContext(AppContext)
+  const { dispatch }: any = useContext(AppContext)
 
   const [loadItem, setLoadItem] = useState<boolean>(false)
   const [loadApointments, setLoadApointments] = useState<boolean>(false)
-  const goTo = (screenName: string) => {
+  const goTo = (screenName: string): void => {
     navigation.navigate(screenName)
   }
 
-  const handleSyncItemAPI = async () => {
+  const handleSyncItemAPI = async (): Promise<void> => {
     const realm = await getRealm()
     const apointments = realm.objects('Apointment')
     const items = realm.objects('Item')
@@ -73,7 +89,7 @@ const CustonTabBar: React.FC<Props> = ({ state, navigation }) => {
 
         const response = await apiItem.getitems()
         // insert items api response
-        response.data.data.map((item: Item) => {
+        response.data.map((item: Item) => {
           realm.write(() => {
             realm.create('Item', {
               id: Number(item.id),
@@ -84,7 +100,7 @@ const CustonTabBar: React.FC<Props> = ({ state, navigation }) => {
           })
         })
         setLoadItem(false)
-        Alert.alert('Itens', `${response.data.data.length} itens atualizados`)
+        Alert.alert('Itens', `${response.data.length} itens atualizados`)
       } catch (error) {
         Alert.alert('Erro', `Erro ao conectar na API ${error}`)
         setLoadItem(false)
@@ -97,19 +113,20 @@ const CustonTabBar: React.FC<Props> = ({ state, navigation }) => {
     }
   }
 
-  const handleSyncApointmentsAPI = async () => {
+  const handleSyncApointmentsAPI = async (): Promise<void> => {
     setLoadApointments(true)
     const realm = await getRealm()
     const apointments = realm.objects('Apointment').sorted('id', true)
     if (apointments.length > 0) {
       try {
         const data: Array<any> = []
-        apointments.map((apointment: Apointments): void => {
+        apointments.map((apointment: Apointments) => {
           data.push({
+            // eslint-disable-next-line @typescript-eslint/camelcase
             id_produto: apointment.item.id,
             matricula: apointment.matricula,
             lote: apointment.lote,
-            vencimento: apointment.vencimento,
+            vencimento: moment(apointment.vencimento).format('YYYY-MM-DD'),
             corredor: apointment.corredor,
             prateleira: apointment.prateleira,
             volume: apointment.volume,
@@ -118,8 +135,7 @@ const CustonTabBar: React.FC<Props> = ({ state, navigation }) => {
           })
         })
         const response = await apiApointments.insertApointments(data)
-
-        if (response.data.code === '1') {
+        if (response.data.status === 'success') {
           realm.write(() => {
             realm.delete(apointments)
           })
@@ -127,9 +143,11 @@ const CustonTabBar: React.FC<Props> = ({ state, navigation }) => {
             type: ACTIONS.LIST_APOINTMENT,
             payload: []
           })
-          Alert.alert('Apontamentos', 'Dados sincronizados com sucesso')
+          Alert.alert('Estoque', 'Dados sincronizados com sucesso')
+          handleSyncApointmentsPF()
         } else {
-          Alert.alert('Apontamentos', 'Verifique suas credenciais')
+          Alert.alert('Estoque', 'Verifique suas credenciais')
+          handleSyncApointmentsPF()
         }
 
         setLoadApointments(false)
@@ -142,6 +160,64 @@ const CustonTabBar: React.FC<Props> = ({ state, navigation }) => {
         )
       }
     } else {
+      // setLoadApointments(false)
+      // Alert.alert('Apontamentos', 'Não há apontamentos para enviar')
+      handleSyncApointmentsPF()
+    }
+  }
+
+  const handleSyncApointmentsPF = async (): Promise<void> => {
+    const realm = await getRealm()
+    const produtos = realm.objects('Produtos').sorted('id', true)
+    const apointmentsPF: Array<ApointmentPF> = realm
+      .objects('ApointmentProductFinished')
+      .sorted('id', true)
+    if (apointmentsPF.length > 0) {
+      try {
+        const listAuxApointments: any = []
+        apointmentsPF.map((apointment: ApointmentPF) => {
+          const produtos: Produto[] = apointment.produtos.map(
+            (item): Produto => ({
+              descricao: item.descricao,
+              quantidade: item.quantidade
+            })
+          )
+          const data = {
+            id_produto: apointment.item.id,
+            matricula: apointment.matricula,
+            lote: apointment.lote,
+            produtos,
+            vencimento: apointment.vencimento,
+            created_at: apointment.created_at
+          }
+          listAuxApointments.push(data)
+        })
+        const response = await apiApointments.insertApointmentsPF(
+          listAuxApointments
+        )
+        if (response.data.status === 'success') {
+          realm.write(() => {
+            realm.delete(apointmentsPF)
+            realm.delete(produtos)
+          })
+          dispatch({
+            type: ACTIONS.LIST_APOINTMENT_PF,
+            payload: []
+          })
+          Alert.alert('Apontamentos', 'Dados sincronizados com sucesso')
+        } else {
+          Alert.alert('Apontamentos', 'Verifique suas credenciais')
+        }
+        setLoadApointments(false)
+      } catch (error) {
+        setLoadApointments(false)
+        console.log('errorAPI', error)
+        Alert.alert(
+          'Produtos acabado erro',
+          `Erro ao conectar com a API ${error} :(`
+        )
+      }
+    } else {
       setLoadApointments(false)
       Alert.alert('Apontamentos', 'Não há apontamentos para enviar')
     }
@@ -149,7 +225,7 @@ const CustonTabBar: React.FC<Props> = ({ state, navigation }) => {
 
   return (
     <TabArea>
-      <TabItem onPress={() => goTo('Home')}>
+      <TabItem onPress={(): void => goTo('Home')}>
         <Icon
           style={{ opacity: state.index === 0 ? 1 : 0.5 }}
           name="home"
@@ -157,7 +233,7 @@ const CustonTabBar: React.FC<Props> = ({ state, navigation }) => {
           color="#FFF"
         />
       </TabItem>
-      <TabItem onPress={() => goTo('ViewApointment')}>
+      <TabItem onPress={(): void => goTo('ViewApointment')}>
         <Icon
           style={{ opacity: state.index === 1 ? 1 : 0.5 }}
           name="sd-card"
@@ -165,9 +241,10 @@ const CustonTabBar: React.FC<Props> = ({ state, navigation }) => {
           color="#FFF"
         />
       </TabItem>
-      <TabItemCenter onPress={() => goTo('Apointment')}>
+      <TabItemCenter onPress={(): void => goTo('Apointment')}>
         <Icon name="add" size={32} color="#4eadbe" />
       </TabItemCenter>
+
       <TabItem onPress={handleSyncItemAPI}>
         {loadItem ? (
           <ActivityIndicator size="large" color="#FFF" />

@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import ItemModal from '../ItemModal'
+import ItemModalPF from '../ItemModalPF'
+// import ItemModal from '../ItemModal'
 
 import {
   Area,
@@ -11,6 +13,12 @@ import {
   DescribleUnidade
 } from './styles'
 
+export interface Produto {
+  id: number
+  descricao: string
+  quantidade: number
+}
+
 type Props = {
   data: {
     id: number
@@ -21,12 +29,8 @@ type Props = {
       unidade: string
     }
     lote: number
-    date: string
-    volume: number
-    prateleira: string
-    corredor: string
-    quantidade: number
-    vencimento: Date
+    produtos: Array<Produto>
+    vencimento: string
     obs: string
     created_at: Date
   }
@@ -34,11 +38,10 @@ type Props = {
 
 const ApointmentProductItem: React.FC<Props> = ({ data }) => {
   const [showModal, setShowModal] = useState(false)
-
   return (
     <Area onPress={(): void => setShowModal(!showModal)}>
       <ItemQuantidade>
-        {(data.quantidade * data.volume).toFixed(2)}
+        {data.produtos.reduce((acc, produto) => produto.quantidade + acc, 0)}
         <DescribleUnidade> Total</DescribleUnidade>
       </ItemQuantidade>
       <InfoArea>
@@ -48,7 +51,7 @@ const ApointmentProductItem: React.FC<Props> = ({ data }) => {
           <SeeDetailButtonText>Ver Detalhes</SeeDetailButtonText>
         </SeeDetailButton>
       </InfoArea>
-      <ItemModal show={showModal} setShow={setShowModal} apontamento={data} />
+      <ItemModalPF show={showModal} setShow={setShowModal} apontamento={data} />
     </Area>
   )
 }

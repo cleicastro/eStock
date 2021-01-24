@@ -65,7 +65,7 @@ const ModalSelectIIem: React.FC<Props> = ({ show, setShow, selectItem }) => {
     }
   }
 
-  const handleSearchItem = async (text: string): Promise<void> => {
+  const handleSearchItem = async (text: string) => {
     setTxtCod(text)
     const realm = await getRealm()
     const data: Array<Item> | [] = realm.objects('Item').sorted('codigo', true)
@@ -79,7 +79,7 @@ const ModalSelectIIem: React.FC<Props> = ({ show, setShow, selectItem }) => {
     }
   }
 
-  const handleSaveItem = async (item: Item): Promise<void> => {
+  const handleSaveItem = async (item: Item) => {
     if (Number(item.codigo) > 0 && item.id > 0) {
       const realm = await getRealm()
       try {

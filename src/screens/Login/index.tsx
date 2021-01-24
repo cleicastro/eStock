@@ -26,11 +26,11 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState<string>('')
 
   useEffect(() => {
-    const checkToken = async () => {
+    const checkToken = async (): Promise<void> => {
       const token = await AsyncStorage.getItem('token')
       if (token) {
         navigation.reset({
-          routes: [{ name: 'MainTab' }]
+          routes: [{ name: 'SelectOperation' }]
         })
       }
       setLoad(false)
@@ -38,14 +38,14 @@ const Login: React.FC = () => {
     checkToken()
   }, [])
 
-  const handleSignClick = async () => {
+  const handleSignClick = async (): Promise<void> => {
     setLoad(true)
     if (email !== '' && password !== '') {
-      const response = await login.logar({ email, password })
-      if (response.data.code === '1') {
+      const response: any = await login.logar({ email, password })
+      if (response.status === 200) {
         await AsyncStorage.setItem('token', JSON.stringify(response.data))
         navigation.reset({
-          routes: [{ name: 'MainTab' }]
+          routes: [{ name: 'SelectOperation' }]
         })
       } else {
         Alert.alert('Login', 'Verifique o email ou senha digitado')
@@ -57,7 +57,7 @@ const Login: React.FC = () => {
     }
   }
 
-  const handleSignQrCodeClick = () => {
+  const handleSignQrCodeClick = (): void => {
     navigation.navigate('ReadQrCode')
   }
 
@@ -73,7 +73,7 @@ const Login: React.FC = () => {
             <Input
               placeholder="Digite seu e-mail"
               value={email}
-              onChangeText={text => setEmail(text)}
+              onChangeText={(text): void => setEmail(text)}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
@@ -85,7 +85,7 @@ const Login: React.FC = () => {
             <Input
               placeholder="Digite sua senha"
               value={password}
-              onChangeText={text => setPassword(text)}
+              onChangeText={(text): void => setPassword(text)}
               secureTextEntry
             />
           </SignInput>

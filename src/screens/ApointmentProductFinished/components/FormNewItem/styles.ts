@@ -18,13 +18,6 @@ export const Input = styled.TextInput`
   padding: 10px;
 `
 
-export const ItemFinder = styled.TouchableOpacity`
-  width: 48px;
-  height: 48px;
-  justify-content: center;
-  align-items: center;
-`
-
 export const ButtonArea = styled.View`
   flex-direction: row;
 `
@@ -41,14 +34,4 @@ export const ActionButtonText = styled.Text`
   font-size: 18px;
   color: #fff;
   font-weight: bold;
-`
-
-export const LabelItemDescription = styled.Text`
-  font-size: 16px;
-  color: #000;
-  width: 90%;
-`
-export const LabelItemCod = styled.Text`
-  font-size: 16px;
-  color: #000;
 `

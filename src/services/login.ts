@@ -6,8 +6,8 @@ interface Login {
 }
 
 const login = {
-  logar: (data: Login) => {
-    return apiConfig.post('login', data)
+  logar: (data: Login): Promise<void> => {
+    return apiConfig.post('/auth/login', data)
   }
 }
 

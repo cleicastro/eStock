@@ -12,7 +12,7 @@ type PropsState = {
 
 export const AppContext = createContext<PropsState | undefined>(undefined)
 
-function AppContexProvider({ children }: Props) {
+function AppContexProvider({ children }: Props): CompositionEvent {
   const [state, dispatch] = useReducer(inventoryReduce, initialState)
   const value = { state, dispatch }
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>

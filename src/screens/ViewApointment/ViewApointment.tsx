@@ -1,3 +1,4 @@
+import { useNavigation } from '@react-navigation/native'
 import React, { useEffect, useState } from 'react'
 import { RefreshControl } from 'react-native'
 import Icon from 'react-native-vector-icons/MaterialIcons'
@@ -30,6 +31,7 @@ interface ApointmentAgregate {
 }
 
 const ViewApointment: React.FC = () => {
+  const navigation = useNavigation()
   const [refreshing, setRefreshing] = useState(false)
   const [searchText, setSearchText] = useState<string>('')
   const [apointments, setApointments] = useState<
@@ -37,7 +39,7 @@ const ViewApointment: React.FC = () => {
   >([])
 
   useEffect(() => {
-    async function loadApointments() {
+    async function loadApointments(): Promise<void> {
       const realm = await getRealm()
       const data = realm.objects('Apointment')
       const value = data.reduce((acc: any, apointment: any) => {
@@ -53,7 +55,7 @@ const ViewApointment: React.FC = () => {
     loadApointments()
   }, [])
 
-  const handleSearchApointment = async () => {
+  const handleSearchApointment = async (): Promise<void> => {
     const realm = await getRealm()
     if (searchText !== '') {
       const data = realm
@@ -84,7 +86,7 @@ const ViewApointment: React.FC = () => {
     }
   }
 
-  const handleRefresh = async () => {
+  const handleRefresh = async (): Promise<void> => {
     setRefreshing(true)
     const realm = await getRealm()
     const data = realm.objects('Apointment')
@@ -99,6 +101,12 @@ const ViewApointment: React.FC = () => {
     setRefreshing(false)
   }
 
+  const handleBackOption = (): void => {
+    navigation.reset({
+      routes: [{ name: 'SelectOperation' }]
+    })
+  }
+
   return (
     <Container>
       <Scroller
@@ -107,6 +115,12 @@ const ViewApointment: React.FC = () => {
         }
       >
         <HeaderArea>
+          <Icon
+            name="arrow-back"
+            size={26}
+            color="#FFF"
+            onPress={handleBackOption}
+          />
           <HeaderTitle>
             {apointments.reduce((acc: number) => acc + 1, 0)} Itens apontados
           </HeaderTitle>
